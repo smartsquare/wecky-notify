@@ -19,10 +19,10 @@ Parameters:
 #       Type: Canary10Percent5Minutes
 
 Resources:
-  GetHelloWorld:
+  TriggerNotification:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: com.aws.codestar.projecttemplates.handler.HelloWorldHandler
+      Handler: de.smartsquare.wecky.NotificationHandler
       Runtime: java8
       Role:
         Fn::ImportValue:
@@ -33,18 +33,3 @@ Resources:
           Properties:
             Path: /
             Method: get
-
-  PostHelloWorld:
-    Type: AWS::Serverless::Function
-    Properties:
-      Handler: com.aws.codestar.projecttemplates.handler.HelloWorldHandler
-      Runtime: java8
-      Role:
-        Fn::ImportValue:
-          !Join ['-', [!Ref 'ProjectId', !Ref 'AWS::Region', 'LambdaTrustRole']]
-      Events:
-        PostEvent:
-          Type: Api
-          Properties:
-            Path: /
-            Method: post
