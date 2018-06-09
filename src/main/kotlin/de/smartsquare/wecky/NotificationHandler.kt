@@ -15,8 +15,7 @@ class NotificationHandler : RequestStreamHandler {
 
     override fun handleRequest(websiteJson: InputStream?, output: OutputStream?, context: Context?) {
         websiteJson?.let {
-            val website = mapper.readValue<Website>(it)
-            print(website)
+            print(mapper.readValue<Website>(it))
         }
     }
 
