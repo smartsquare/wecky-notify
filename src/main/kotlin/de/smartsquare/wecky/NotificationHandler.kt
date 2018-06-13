@@ -1,11 +1,22 @@
 package de.smartsquare.wecky
 
 import com.amazonaws.services.lambda.runtime.Context
-import com.amazonaws.services.lambda.runtime.RequestHandler
+import com.amazonaws.services.lambda.runtime.RequestStreamHandler
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.KotlinModule
+import com.fasterxml.jackson.module.kotlin.readValue
+import de.smartsquare.wecky.domain.Website
+import java.io.InputStream
+import java.io.OutputStream
 
-class NotificationHandler : RequestHandler<Any, String> {
-    override fun handleRequest(p0: Any?, p1: Context?): String {
-        return "Hello World"
+class NotificationHandler : RequestStreamHandler {
+
+    private val mapper = ObjectMapper().registerModule(KotlinModule())
+
+    override fun handleRequest(websiteJson: InputStream?, output: OutputStream?, context: Context?) {
+        websiteJson?.let {
+            print(mapper.readValue<Website>(it))
+        }
     }
 
 }
