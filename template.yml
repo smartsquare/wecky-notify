@@ -17,7 +17,6 @@ Parameters:
 #     DeploymentPreference:
 #       Enabled: true
 #       Type: Canary10Percent5Minutes
-
 Resources:
   TriggerNotification:
     Type: AWS::Serverless::Function
