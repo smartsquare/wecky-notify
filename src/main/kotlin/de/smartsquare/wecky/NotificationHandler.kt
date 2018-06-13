@@ -1,7 +1,10 @@
 package de.smartsquare.wecky
 
+import com.amazonaws.regions.Regions
 import com.amazonaws.services.lambda.runtime.Context
 import com.amazonaws.services.lambda.runtime.RequestStreamHandler
+import com.amazonaws.services.simpleemail.AmazonSimpleEmailServiceClientBuilder
+import com.amazonaws.services.simpleemail.model.*
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.readValue
@@ -14,9 +17,26 @@ class NotificationHandler : RequestStreamHandler {
     private val mapper = ObjectMapper().registerModule(KotlinModule())
 
     override fun handleRequest(websiteJson: InputStream?, output: OutputStream?, context: Context?) {
-        websiteJson?.let {
-            print(mapper.readValue<Website>(it))
+        websiteJson?.also { inputStream ->
+            val website: Website = mapper.readValue(inputStream)
+
+            val ses = AmazonSimpleEmailServiceClientBuilder.standard()
+                    .withRegion(Regions.EU_CENTRAL_1)
+                    .build()
+            val websiteChangedUpdateMail = SendEmailRequest()
+                    .withDestination(Destination().withToAddresses(website.userEmail))
+                    .withMessage(Message()
+                            .withBody(Body()
+                                    .withText(Content()
+                                            .withCharset("UTF-8")
+                                            .withData("${website.url} has changed!")))
+                            .withSubject(Content()
+                                    .withCharset("UTF-8")
+                                    .withData("Wecky Notify")))
+                    .withSource("wecky@smartsquare.de")
+            ses.sendEmail(websiteChangedUpdateMail)
         }
+
     }
 
 }
