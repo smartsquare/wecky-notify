@@ -21,7 +21,7 @@ class NotificationHandler : RequestStreamHandler {
             val website: Website = mapper.readValue(inputStream)
 
             val ses = AmazonSimpleEmailServiceClientBuilder.standard()
-                    .withRegion(Regions.EU_CENTRAL_1)
+                    .withRegion(Regions.EU_WEST_1)
                     .build()
             val websiteChangedUpdateMail = SendEmailRequest()
                     .withDestination(Destination().withToAddresses(website.userEmail))
@@ -33,7 +33,7 @@ class NotificationHandler : RequestStreamHandler {
                             .withSubject(Content()
                                     .withCharset("UTF-8")
                                     .withData("Wecky Notify")))
-                    .withSource("wecky@smartsquare.de")
+                    .withSource("d.dierkes@outlook.de")
             ses.sendEmail(websiteChangedUpdateMail)
         }
 
