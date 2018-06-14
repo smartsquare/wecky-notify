@@ -1,5 +1,7 @@
 package de.smartsquare.wecky
 
+import com.amazonaws.auth.AWSStaticCredentialsProvider
+import com.amazonaws.auth.profile.ProfileCredentialsProvider
 import com.amazonaws.regions.Regions
 import com.amazonaws.services.lambda.runtime.Context
 import com.amazonaws.services.lambda.runtime.RequestStreamHandler
@@ -20,9 +22,14 @@ class NotificationHandler : RequestStreamHandler {
         websiteJson?.also { inputStream ->
             val website: Website = mapper.readValue(inputStream)
 
+            val credentials = ProfileCredentialsProvider().credentials
+            val credentialsProvider = AWSStaticCredentialsProvider(credentials)
             val ses = AmazonSimpleEmailServiceClientBuilder.standard()
+                    .withCredentials(credentialsProvider)
                     .withRegion(Regions.EU_WEST_1)
                     .build()
+
+
             val websiteChangedUpdateMail = SendEmailRequest()
                     .withDestination(Destination().withToAddresses(website.userEmail))
                     .withMessage(Message()
