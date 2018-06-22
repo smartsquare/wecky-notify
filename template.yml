@@ -21,6 +21,7 @@ Resources:
   TriggerNotification:
     Type: AWS::Serverless::Function
     Properties:
+      FunctionName: Wecky-NotifyUser
       Handler: de.smartsquare.wecky.NotificationHandler
       Runtime: java8
       Role:
