@@ -1,11 +1,13 @@
 package de.smartsquare.wecky.domain
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import java.time.Instant
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-data class WebsiteChange(
+data class HashedWebsite(
         val id: String,
         val url: String,
         val content: String,
-        val userEmail: String
+        val hash: Int = content.hashCode(),
+        val crawlDate: Instant = Instant.now()
 )
