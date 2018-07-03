@@ -5,7 +5,7 @@ import java.time.Instant
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class HashedWebsite(
-        val id: String,
+        val websiteId: String,
         val url: String,
         val content: String,
         val hash: Int = content.hashCode(),

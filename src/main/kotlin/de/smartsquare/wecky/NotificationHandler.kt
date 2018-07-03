@@ -42,7 +42,7 @@ class NotificationHandler : RequestStreamHandler {
 
             val hashedWebsite: HashedWebsite = mapper.readValue(inputStream)
             val userRepo = UserRepository(amazonDynamoDB)
-            val user = userRepo.findUserBy(hashedWebsite.id)
+            val user = userRepo.findUserBy(hashedWebsite.websiteId)
 
             val ses = AmazonSimpleEmailServiceClientBuilder.standard()
                     .withCredentials(DefaultAWSCredentialsProviderChain.getInstance())
@@ -52,7 +52,7 @@ class NotificationHandler : RequestStreamHandler {
             if (user != null) {
                 NotificationService(ses).notifyUser(user, hashedWebsite)
             } else {
-                log.info("No user found for website [${hashedWebsite.id}]")
+                log.info("No user found for website [${hashedWebsite.websiteId}]")
             }
         }
 
