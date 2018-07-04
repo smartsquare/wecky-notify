@@ -1,0 +1,33 @@
+{
+  "Records": [
+    {
+      "eventID": "7de3041dd709b024af6f29e4fa13d34c",
+      "eventName": "INSERT",
+      "eventVersion": "1.1",
+      "eventSource": "aws:dynamodb",
+      "awsRegion": "us-west-2",
+      "dynamodb": {
+        "approximateCreationDateTime": 1.53062874E9,
+        "keys": {
+          "timestamp": {
+            "s": "2016-11-18:12:09:36"
+          },
+          "username": {
+            "s": "John Doe"
+          }
+        },
+        "newImage": {
+          "websiteId": "HEISE",
+          "url": "http://www.heise.de",
+          "content": "<html/>",
+          "hash": "4711",
+          "crawlDate": "1530630647897"
+        },
+        "sequenceNumber": "13021600000000001596893679",
+        "sizeBytes": 112,
+        "streamViewType": "NEW_IMAGE"
+      },
+      "eventSourceARN": "arn:aws:dynamodb:us-east-1:123456789012:table/BarkTable/stream/2016-11-16T20:42:48.104"
+    }
+  ]
+}

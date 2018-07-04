@@ -11,7 +11,6 @@ import com.amazonaws.services.lambda.runtime.Context
 import com.amazonaws.services.lambda.runtime.RequestStreamHandler
 import com.amazonaws.services.lambda.runtime.events.DynamodbEvent
 import com.amazonaws.services.simpleemail.AmazonSimpleEmailServiceClientBuilder
-import com.fasterxml.jackson.module.kotlin.readValue
 import de.smartsquare.wecky.domain.HashedWebsite
 import org.slf4j.LoggerFactory
 import java.io.InputStream
@@ -26,9 +25,7 @@ class NotificationHandler : RequestStreamHandler {
     }
 
     override fun handleRequest(inputStream: InputStream?, output: OutputStream?, context: Context?) {
-        val inputAsString = inputStream!!.bufferedReader().use { it.readText() }
-        log.info("incoming: $inputAsString")
-        val dyndbEvent: DynamodbEvent = mapper.readValue(inputAsString)
+        val dyndbEvent = mapper.readValue(inputStream!!, DynamodbEvent::class.java)
 
         for (record in dyndbEvent.records) {
             if (record.eventName != OperationType.INSERT.toString()) {
