@@ -20,10 +20,14 @@ class UserRepository(val dynamoDB: AmazonDynamoDB) {
         val getItemRequest = GetItemRequest()
                 .withKey(mapOf("id" to AttributeValue(websiteId)))
                 .withTableName("Website")
-        val website = dynamoDB.getItem(getItemRequest).item ?: return null
+        val website = dynamoDB.getItem(getItemRequest).item
+        if (website == null) {
+            log.info("No website found with id [$websiteId]")
+            return null
+        }
 
-
-        val attrValues = mapOf(":user_id" to website["userId"])
+        val userId = website["userId"]
+        val attrValues = mapOf(":user_id" to userId)
         val scanReq = ScanRequest()
                 .withTableName(tableName)
                 .withFilterExpression("userId = :user_id")
@@ -31,7 +35,11 @@ class UserRepository(val dynamoDB: AmazonDynamoDB) {
 
         val result = dynamoDB.scan(scanReq)
 
-        val userRecord = result.items.firstOrNull() ?: return null
+        val userRecord = result.items.firstOrNull()
+        if (userRecord == null) {
+            log.info("No user found with id [$userId]")
+            return null
+        }
         val user = User(userRecord.get("id")!!.s,
                 userRecord.get("name")!!.s,
                 userRecord.get("email")!!.s)

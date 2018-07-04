@@ -50,8 +50,6 @@ class NotificationHandler : RequestStreamHandler {
 
             if (user != null) {
                 NotificationService(ses).notifyUser(user, hashedWebsite)
-            } else {
-                log.info("No user found for website [${hashedWebsite.websiteId}]")
             }
         }
     }
