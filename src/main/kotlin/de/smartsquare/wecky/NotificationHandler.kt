@@ -3,10 +3,13 @@ package de.smartsquare.wecky
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain
 import com.amazonaws.client.builder.AwsClientBuilder
 import com.amazonaws.regions.Regions
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDB
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder
+import com.amazonaws.services.dynamodbv2.model.OperationType
 import com.amazonaws.services.lambda.runtime.Context
 import com.amazonaws.services.lambda.runtime.RequestStreamHandler
+import com.amazonaws.services.lambda.runtime.events.DynamodbEvent
 import com.amazonaws.services.simpleemail.AmazonSimpleEmailServiceClientBuilder
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
@@ -14,6 +17,7 @@ import de.smartsquare.wecky.domain.HashedWebsite
 import org.slf4j.LoggerFactory
 import java.io.InputStream
 import java.io.OutputStream
+import java.time.Instant
 
 class NotificationHandler : RequestStreamHandler {
 
@@ -22,26 +26,23 @@ class NotificationHandler : RequestStreamHandler {
         val mapper = jacksonObjectMapper()
     }
 
-    override fun handleRequest(websiteJson: InputStream?, output: OutputStream?, context: Context?) {
-        websiteJson?.also { inputStream ->
-            val dyndbLocal = System.getenv("DYNDB_LOCAL")
-            val amazonDynamoDB =
-                    if (dyndbLocal?.isNotEmpty() ?: false) {
-                        log.info("Triggered local dev mode using local DynamoDB at [$dyndbLocal]")
-                        System.setProperty("aws.accessKeyId", "key")
-                        System.setProperty("aws.secretKey", "key2")
-                        AmazonDynamoDBClient.builder()
-                                .withEndpointConfiguration(AwsClientBuilder.EndpointConfiguration(dyndbLocal, "eu-central-1"))
-                                .build()
-                    } else {
-                        log.info("Using production DynamoDB at eu-central-1")
-                        AmazonDynamoDBClientBuilder.standard()
-                                .withRegion(Regions.EU_CENTRAL_1)
-                                .build()
-                    }
+    override fun handleRequest(inputStream: InputStream?, output: OutputStream?, context: Context?) {
+        val dyndbEvent: DynamodbEvent = mapper.readValue(inputStream!!)
 
-            val hashedWebsite: HashedWebsite = mapper.readValue(inputStream)
-            val userRepo = UserRepository(amazonDynamoDB)
+        for (record in dyndbEvent.records) {
+            if (record.eventName != OperationType.INSERT.toString()) {
+                log.info("Record event not of type INSERT, aborting...")
+                return
+            }
+
+            val item = record.dynamodb.newImage
+            val hashedWebsite = HashedWebsite(
+                    item.get("websiteId")!!.s,
+                    item.get("url")!!.s,
+                    item.get("content")!!.s,
+                    item.get("hash")!!.s.toInt(),
+                    Instant.ofEpochMilli(item.get("crawlDate")!!.s.toLong()))
+            val userRepo = UserRepository(determineDynamoDB())
             val user = userRepo.findUserBy(hashedWebsite.websiteId)
 
             val ses = AmazonSimpleEmailServiceClientBuilder.standard()
@@ -55,7 +56,23 @@ class NotificationHandler : RequestStreamHandler {
                 log.info("No user found for website [${hashedWebsite.websiteId}]")
             }
         }
+    }
 
+    private fun determineDynamoDB(): AmazonDynamoDB {
+        val dyndbLocal = System.getenv("DYNDB_LOCAL")
+        return if (dyndbLocal?.isNotEmpty() == true) {
+            log.info("Triggered local dev mode using local DynamoDB at [$dyndbLocal]")
+            System.setProperty("aws.accessKeyId", "key")
+            System.setProperty("aws.secretKey", "key2")
+            AmazonDynamoDBClient.builder()
+                    .withEndpointConfiguration(AwsClientBuilder.EndpointConfiguration(dyndbLocal, "eu-central-1"))
+                    .build()
+        } else {
+            log.info("Using production DynamoDB at eu-central-1")
+            AmazonDynamoDBClientBuilder.standard()
+                    .withRegion(Regions.EU_CENTRAL_1)
+                    .build()
+        }
     }
 
 }
