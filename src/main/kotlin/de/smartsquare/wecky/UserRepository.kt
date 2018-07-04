@@ -4,6 +4,7 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDB
 import com.amazonaws.services.dynamodbv2.model.AttributeValue
 import com.amazonaws.services.dynamodbv2.model.GetItemRequest
 import com.amazonaws.services.dynamodbv2.model.ScanRequest
+import de.smartsquare.wecky.domain.HashedWebsite
 import de.smartsquare.wecky.domain.User
 import org.slf4j.LoggerFactory
 
@@ -15,19 +16,22 @@ class UserRepository(val dynamoDB: AmazonDynamoDB) {
         val tableName = "User"
     }
 
-    fun findUserBy(websiteId: String): User? {
-        log.info("Fetching user for website [$websiteId]")
+    fun findUserIdBy(hashedWebsite: HashedWebsite): String? {
+        val websiteId = hashedWebsite.websiteId
+        log.info("Fetching website for id [$websiteId]")
         val getItemRequest = GetItemRequest()
                 .withKey(mapOf("id" to AttributeValue(websiteId)))
                 .withTableName("Website")
         val website = dynamoDB.getItem(getItemRequest).item
         if (website == null) {
             log.info("No website found with id [$websiteId]")
-            return null
         }
+        return website["userId"]?.s
+    }
 
-        val userId = website["userId"]
-        val attrValues = mapOf(":user_id" to userId)
+
+    fun findUserBy(userId: String): User? {
+        val attrValues = mapOf(":user_id" to AttributeValue(userId))
         val scanReq = ScanRequest()
                 .withTableName(tableName)
                 .withFilterExpression("userId = :user_id")

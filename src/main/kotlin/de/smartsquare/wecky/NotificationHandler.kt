@@ -40,17 +40,16 @@ class NotificationHandler : RequestStreamHandler {
                     item.get("content")!!.s,
                     item.get("hash")!!.s.toInt(),
                     Instant.ofEpochMilli(item.get("crawlDate")!!.s.toLong()))
-            val userRepo = UserRepository(determineDynamoDB())
-            val user = userRepo.findUserBy(hashedWebsite.websiteId)
 
             val ses = AmazonSimpleEmailServiceClientBuilder.standard()
                     .withCredentials(DefaultAWSCredentialsProviderChain.getInstance())
                     .withRegion(Regions.EU_WEST_1)
                     .build()
+            val userRepo = UserRepository(determineDynamoDB())
 
-            if (user != null) {
-                NotificationService(ses).notifyUser(user, hashedWebsite)
-            }
+            userRepo.findUserIdBy(hashedWebsite)
+                    ?.let { userRepo.findUserBy(it) }
+                    ?.let { NotificationService(ses).notifyUser(it, hashedWebsite) }
         }
     }
 
