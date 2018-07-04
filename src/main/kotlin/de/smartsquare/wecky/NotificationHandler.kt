@@ -11,8 +11,6 @@ import com.amazonaws.services.lambda.runtime.Context
 import com.amazonaws.services.lambda.runtime.RequestStreamHandler
 import com.amazonaws.services.lambda.runtime.events.DynamodbEvent
 import com.amazonaws.services.simpleemail.AmazonSimpleEmailServiceClientBuilder
-import com.fasterxml.jackson.databind.MapperFeature
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import de.smartsquare.wecky.domain.HashedWebsite
 import org.slf4j.LoggerFactory
@@ -24,12 +22,13 @@ class NotificationHandler : RequestStreamHandler {
 
     companion object Factory {
         val log = LoggerFactory.getLogger(NotificationHandler::class.java.simpleName)
-        val mapper = jacksonObjectMapper()
-                .configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true)
+        val mapper = JacksonAwsMapperBuilder().build()
     }
 
     override fun handleRequest(inputStream: InputStream?, output: OutputStream?, context: Context?) {
-        val dyndbEvent: DynamodbEvent = mapper.readValue(inputStream!!)
+        val inputAsString = inputStream!!.bufferedReader().use { it.readText() }
+        log.info("incoming: $inputAsString")
+        val dyndbEvent: DynamodbEvent = mapper.readValue(inputAsString)
 
         for (record in dyndbEvent.records) {
             if (record.eventName != OperationType.INSERT.toString()) {
