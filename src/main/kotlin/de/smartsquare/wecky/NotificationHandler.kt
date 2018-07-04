@@ -11,6 +11,7 @@ import com.amazonaws.services.lambda.runtime.Context
 import com.amazonaws.services.lambda.runtime.RequestStreamHandler
 import com.amazonaws.services.lambda.runtime.events.DynamodbEvent
 import com.amazonaws.services.simpleemail.AmazonSimpleEmailServiceClientBuilder
+import com.fasterxml.jackson.databind.MapperFeature
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import de.smartsquare.wecky.domain.HashedWebsite
@@ -24,6 +25,7 @@ class NotificationHandler : RequestStreamHandler {
     companion object Factory {
         val log = LoggerFactory.getLogger(NotificationHandler::class.java.simpleName)
         val mapper = jacksonObjectMapper()
+                .configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true)
     }
 
     override fun handleRequest(inputStream: InputStream?, output: OutputStream?, context: Context?) {
