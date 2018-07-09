@@ -1,10 +1,8 @@
-package de.smartsquare.wecky
+package de.smartsquare.wecky.domain
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB
 import com.amazonaws.services.dynamodbv2.model.AttributeValue
 import com.amazonaws.services.dynamodbv2.model.GetItemRequest
-import de.smartsquare.wecky.domain.HashedWebsite
-import de.smartsquare.wecky.domain.User
 import org.slf4j.LoggerFactory
 
 
@@ -12,7 +10,6 @@ class UserRepository(val dynamoDB: AmazonDynamoDB) {
 
     companion object Factory {
         val log = LoggerFactory.getLogger(UserRepository::class.java.simpleName)
-        val tableName = "User"
     }
 
     fun findUserIdBy(hashedWebsite: HashedWebsite): String? {
