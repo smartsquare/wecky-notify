@@ -12,6 +12,7 @@ import com.amazonaws.services.lambda.runtime.RequestStreamHandler
 import com.amazonaws.services.lambda.runtime.events.DynamodbEvent
 import com.amazonaws.services.simpleemail.AmazonSimpleEmailServiceClientBuilder
 import de.smartsquare.wecky.domain.HashedWebsite
+import de.smartsquare.wecky.domain.UserRepository
 import org.slf4j.LoggerFactory
 import java.io.InputStream
 import java.io.OutputStream
@@ -38,7 +39,7 @@ class NotificationHandler : RequestStreamHandler {
                     item.get("websiteId")!!.s,
                     item.get("url")!!.s,
                     item.get("content")!!.s,
-                    item.get("hash")!!.s.toInt(),
+                    item.get("hashValue")!!.s.toInt(),
                     Instant.ofEpochMilli(item.get("crawlDate")!!.s.toLong()))
 
             val ses = AmazonSimpleEmailServiceClientBuilder.standard()
