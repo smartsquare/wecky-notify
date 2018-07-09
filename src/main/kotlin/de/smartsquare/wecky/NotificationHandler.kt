@@ -40,7 +40,7 @@ class NotificationHandler : RequestStreamHandler {
                     item.get("url")!!.s,
                     item.get("content")!!.s,
                     item.get("hashValue")!!.s.toInt(),
-                    Instant.ofEpochMilli(item.get("crawlDate")!!.s.toLong()))
+                    Instant.ofEpochMilli(item.get("crawlDate")!!.n.toLong()))
 
             val ses = AmazonSimpleEmailServiceClientBuilder.standard()
                     .withCredentials(DefaultAWSCredentialsProviderChain.getInstance())
