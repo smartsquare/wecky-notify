@@ -17,11 +17,13 @@
           }
         },
         "newImage": {
-          "websiteId": "HEISE",
-          "url": "http://www.heise.de",
+          "websiteId": "TIME",
+          "url": "http://time.is",
           "content": "<html/>",
           "hashValue": "4711",
-          "crawlDate": "1530630647897"
+          "crawlDate": {
+            "n": "1530630647897"
+          }
         },
         "sequenceNumber": "13021600000000001596893679",
         "sizeBytes": 112,
