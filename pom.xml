@@ -10,9 +10,9 @@
     <properties>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
-        <junit.platform.version>1.0.1</junit.platform.version>
-        <junit.jupiter.version>5.0.1</junit.jupiter.version>
-        <kotlin.version>1.2.30</kotlin.version>
+        <junit.platform.version>1.2.0</junit.platform.version>
+        <junit.jupiter.version>5.2.0</junit.jupiter.version>
+        <kotlin.version>1.2.51</kotlin.version>
     </properties>
 
     <dependencyManagement>
@@ -77,6 +77,11 @@
             <artifactId>aws-serverless-java-container-core</artifactId>
             <version>0.9</version>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>cloud.localstack</groupId>
+            <artifactId>localstack-utils</artifactId>
+            <version>0.1.14</version>
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
