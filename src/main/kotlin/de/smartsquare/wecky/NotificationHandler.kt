@@ -1,6 +1,5 @@
 package de.smartsquare.wecky
 
-import com.amazonaws.auth.DefaultAWSCredentialsProviderChain
 import com.amazonaws.client.builder.AwsClientBuilder
 import com.amazonaws.regions.Regions
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB
@@ -10,6 +9,7 @@ import com.amazonaws.services.dynamodbv2.model.OperationType
 import com.amazonaws.services.lambda.runtime.Context
 import com.amazonaws.services.lambda.runtime.RequestStreamHandler
 import com.amazonaws.services.lambda.runtime.events.DynamodbEvent
+import com.amazonaws.services.simpleemail.AmazonSimpleEmailService
 import com.amazonaws.services.simpleemail.AmazonSimpleEmailServiceClientBuilder
 import de.smartsquare.wecky.domain.HashedWebsite
 import de.smartsquare.wecky.domain.UserRepository
@@ -42,10 +42,7 @@ class NotificationHandler : RequestStreamHandler {
                     item.get("hashValue")!!.s.toInt(),
                     Instant.ofEpochMilli(item.get("crawlDate")!!.n.toLong()))
 
-            val ses = AmazonSimpleEmailServiceClientBuilder.standard()
-                    .withCredentials(DefaultAWSCredentialsProviderChain.getInstance())
-                    .withRegion(Regions.EU_WEST_1)
-                    .build()
+            val ses = determineSes()
             val userRepo = UserRepository(determineDynamoDB())
 
             userRepo.findUserIdBy(hashedWebsite)
@@ -54,8 +51,27 @@ class NotificationHandler : RequestStreamHandler {
         }
     }
 
+    private fun getEnv(name: String) = System.getenv(name) ?: System.getProperty(name)
+
+    private fun determineSes(): AmazonSimpleEmailService {
+        val sesLocal = getEnv("SES_LOCAL")
+
+        return if (sesLocal?.isNotEmpty() == true) {
+            log.info("Triggered local dev mode using local SES at [$sesLocal]")
+            AmazonSimpleEmailServiceClientBuilder.standard()
+                    .withEndpointConfiguration(AwsClientBuilder.EndpointConfiguration(sesLocal, "eu-west-1"))
+                    .build()
+        } else {
+            log.info("Using production SES at eu-west-1")
+            AmazonSimpleEmailServiceClientBuilder.standard()
+                    .withRegion(Regions.EU_WEST_1)
+                    .build()
+        }
+    }
+
+
     private fun determineDynamoDB(): AmazonDynamoDB {
-        val dyndbLocal = System.getenv("DYNDB_LOCAL")
+        val dyndbLocal = getEnv("DYNDB_LOCAL")
         return if (dyndbLocal?.isNotEmpty() == true) {
             log.info("Triggered local dev mode using local DynamoDB at [$dyndbLocal]")
             System.setProperty("aws.accessKeyId", "key")
