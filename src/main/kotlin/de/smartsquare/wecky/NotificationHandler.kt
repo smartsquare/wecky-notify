@@ -7,7 +7,10 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder
 import com.amazonaws.services.lambda.runtime.Context
 import com.amazonaws.services.lambda.runtime.RequestStreamHandler
+import com.amazonaws.services.s3.AmazonS3
+import com.amazonaws.services.s3.AmazonS3ClientBuilder
 import com.amazonaws.services.s3.event.S3EventNotification
+import com.amazonaws.services.s3.transfer.TransferManagerBuilder
 import com.amazonaws.services.simpleemail.AmazonSimpleEmailService
 import com.amazonaws.services.simpleemail.AmazonSimpleEmailServiceClientBuilder
 import de.smartsquare.wecky.domain.DynamoRepository
@@ -32,33 +35,48 @@ class NotificationHandler : RequestStreamHandler {
             }
 
             val ses = determineSes()
+            val transferManager = TransferManagerBuilder.standard().withS3Client(determineS3()).build()
             val dynamoRepo = DynamoRepository(determineDynamoDB())
 
             val bucket = record.s3.bucket.name
             val key = record.s3.getObject().key
-            val region = record.awsRegion
-            val linkToScreenshot = "https://s3.$region.amazonaws.com/$bucket/$key"
-
             val websiteId = key.split("-")[0]
             val website = dynamoRepo.findWebsiteById(websiteId)
 
+            val tempFile = createTempFile()
+            transferManager.download(bucket, key, tempFile)
+
             website
                     ?.let { dynamoRepo.findUserBy(it.userId) }
-                    ?.let { NotificationService(ses).notifyUser(it, website, linkToScreenshot) }
+                    ?.let { NotificationService(ses).notifyUser(it, website, tempFile) }
         }
     }
 
     private fun getEnv(name: String) = System.getenv(name) ?: System.getProperty(name)
 
-    private fun endpointConfiguration(local: String?) = AwsClientBuilder.EndpointConfiguration(local, "eu-west-1")
+    private fun endpointConfiguration(local: String, region: String = "eu-central-1") = AwsClientBuilder.EndpointConfiguration(local, region)
+
+    private fun determineS3(): AmazonS3 {
+        val s3Local = getEnv("S3_LOCAL")
+        return if (s3Local?.isNotEmpty() == true) {
+            log.info("Triggered local dev mode using local S3 at [$s3Local]")
+            AmazonS3ClientBuilder.standard()
+                    .withEndpointConfiguration(endpointConfiguration(s3Local))
+                    .build()
+        } else {
+            log.info("Using production S3 at eu-central-1")
+            AmazonS3ClientBuilder.standard()
+                    .withRegion(Regions.EU_CENTRAL_1)
+                    .build()
+        }
+    }
 
     private fun determineSes(): AmazonSimpleEmailService {
         val sesLocal = getEnv("SES_LOCAL")
-
         return if (sesLocal?.isNotEmpty() == true) {
             log.info("Triggered local dev mode using local SES at [$sesLocal]")
             AmazonSimpleEmailServiceClientBuilder.standard()
-                    .withEndpointConfiguration(endpointConfiguration(sesLocal))
+                    .withEndpointConfiguration(endpointConfiguration(sesLocal, "eu-west-1"))
                     .build()
         } else {
             log.info("Using production SES at eu-west-1")
@@ -84,5 +102,4 @@ class NotificationHandler : RequestStreamHandler {
                     .build()
         }
     }
-
 }

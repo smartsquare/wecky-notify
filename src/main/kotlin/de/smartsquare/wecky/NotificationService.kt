@@ -5,6 +5,8 @@ import com.amazonaws.services.simpleemail.model.*
 import de.smartsquare.wecky.domain.User
 import de.smartsquare.wecky.domain.Website
 import org.slf4j.LoggerFactory
+import java.io.File
+import java.util.*
 
 class NotificationService(val amazonSes: AmazonSimpleEmailService) {
 
@@ -12,7 +14,7 @@ class NotificationService(val amazonSes: AmazonSimpleEmailService) {
         val log = LoggerFactory.getLogger(NotificationService::class.java.simpleName)
     }
 
-    fun notifyUser(user: User, website: Website, linkToScreenshot: String) {
+    fun notifyUser(user: User, website: Website, imageFile: File) {
         val websiteChangedUpdateMail = SendEmailRequest()
                 .withDestination(Destination().withToAddresses(user.email))
                 .withMessage(Message()
@@ -25,7 +27,8 @@ class NotificationService(val amazonSes: AmazonSimpleEmailService) {
                                             <p>I even captured a screenshot. You can find it attached to this email. :-)</p>
                                             <p>Yours,<br/>
                                             Wecky</p>
-                                            <img src="$linkToScreenshot"/>
+                                            <p/>
+                                            <img src="data:image/jpg;base64,${imageFile.toBase64String()}" />
                                         """.trimIndent())
                                 ))
                         .withSubject(Content()
@@ -34,5 +37,10 @@ class NotificationService(val amazonSes: AmazonSimpleEmailService) {
                 .withSource("smartsquaregmbh@gmail.com")
         log.info("Sending email to [${user.email}]")
         amazonSes.sendEmail(websiteChangedUpdateMail)
+    }
+
+    fun File.toBase64String(): String {
+        val bytes = this.readBytes()
+        return Base64.getEncoder().encodeToString(bytes)
     }
 }

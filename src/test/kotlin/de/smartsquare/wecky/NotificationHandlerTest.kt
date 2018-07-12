@@ -6,12 +6,15 @@ import com.amazonaws.client.builder.AwsClientBuilder
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient
 import com.amazonaws.services.dynamodbv2.model.*
+import com.amazonaws.services.s3.AmazonS3ClientBuilder
+import com.amazonaws.services.s3.transfer.TransferManagerBuilder
 import com.amazonaws.services.simpleemail.AmazonSimpleEmailService
 import com.amazonaws.services.simpleemail.AmazonSimpleEmailServiceClientBuilder
 import com.amazonaws.services.simpleemail.model.VerifyEmailIdentityRequest
 import de.smartsquare.wecky.domain.DynamoRepository
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty
 import org.junit.jupiter.api.extension.ExtendWith
@@ -20,6 +23,7 @@ import java.util.*
 
 @ExtendWith(LocalstackDockerExtension::class)
 @DisabledIfSystemProperty(named = "ci-server", matches = "true")
+@Disabled
 class NotificationHandlerTest {
 
     lateinit var handler: NotificationHandler
@@ -58,6 +62,19 @@ class NotificationHandlerTest {
                 .withEndpointConfiguration(AwsClientBuilder.EndpointConfiguration(endpointSES, "eu-west-1"))
                 .build()
         ses.verifyEmailIdentity(VerifyEmailIdentityRequest().withEmailAddress("smartsquaregmbh@gmail.com"))
+
+        val s3Local = LocalstackDocker.INSTANCE.endpointS3
+        System.setProperty("S3_LOCAL", s3Local)
+        val s3 = AmazonS3ClientBuilder.standard()
+                .withEndpointConfiguration(AwsClientBuilder.EndpointConfiguration(s3Local, "eu-central-1"))
+                .build()
+        val transferManager = TransferManagerBuilder.standard()
+                .withS3Client(s3)
+                .build()
+        val tempFile = createTempFile()
+        tempFile.writeText("foobar")
+        s3.createBucket("wecky-screens")
+        transferManager.upload("wecky-screens", "TIME-4711.png", tempFile)
     }
 
     private fun createTable(dyndbClient: AmazonDynamoDB, tableName: String) {
