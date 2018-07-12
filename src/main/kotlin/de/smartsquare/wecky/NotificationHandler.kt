@@ -44,7 +44,10 @@ class NotificationHandler : RequestStreamHandler {
             val website = dynamoRepo.findWebsiteById(websiteId)
 
             val tempFile = createTempFile()
-            transferManager.download(bucket, key, tempFile)
+            val download = transferManager.download(bucket, key, tempFile)
+            while (!download.isDone) {
+                Thread.sleep(100)
+            }
 
             website
                     ?.let { dynamoRepo.findUserBy(it.userId) }
