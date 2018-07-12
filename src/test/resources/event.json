@@ -1,35 +1,38 @@
 {
   "Records": [
     {
-      "eventID": "7de3041dd709b024af6f29e4fa13d34c",
-      "eventName": "INSERT",
-      "eventVersion": "1.1",
-      "eventSource": "aws:dynamodb",
+      "eventVersion": "2.0",
+      "eventSource": "aws:s3",
       "awsRegion": "us-west-2",
-      "dynamodb": {
-        "ApproximateCreationDateTime": 1.53062874E9,
-        "keys": {
-          "timestamp": {
-            "s": "2016-11-18:12:09:36"
-          },
-          "username": {
-            "s": "John Doe"
-          }
-        },
-        "newImage": {
-          "websiteId": "TIME",
-          "url": "http://time.is",
-          "content": "<html/>",
-          "hashValue": "4711",
-          "crawlDate": {
-            "n": "1530630647897"
-          }
-        },
-        "sequenceNumber": "13021600000000001596893679",
-        "sizeBytes": 112,
-        "streamViewType": "NEW_IMAGE"
+      "eventTime": "1970-01-01T00:00:00.000Z",
+      "eventName": "ObjectCreated:Put",
+      "userIdentity": {
+        "principalId": "AIDAJDPLRKLG7UEXAMPLE"
       },
-      "eventSourceARN": "arn:aws:dynamodb:us-east-1:123456789012:table/BarkTable/stream/2016-11-16T20:42:48.104"
+      "requestParameters": {
+        "sourceIPAddress": "127.0.0.1"
+      },
+      "responseElements": {
+        "x-amz-request-id": "C3D13FE58DE4C810",
+        "x-amz-id-2": "FMyUVURIY8/IgAtTv8xRjskZQpcIZ9KG4V5Wp6S7S/JRWeUWerMUE5JgHvANOjpD"
+      },
+      "s3": {
+        "s3SchemaVersion": "1.0",
+        "configurationId": "testConfigRule",
+        "bucket": {
+          "name": "sourcebucket",
+          "ownerIdentity": {
+            "principalId": "A3NL1KOZZKExample"
+          },
+          "arn": "arn:aws:s3:::sourcebucket"
+        },
+        "object": {
+          "key": "TIME-4711.png",
+          "size": 1024,
+          "eTag": "d41d8cd98f00b204e9800998ecf8427e",
+          "versionId": "096fKKXTRTtl3on89fVO.nfljtsv6qko"
+        }
+      }
     }
   ]
 }

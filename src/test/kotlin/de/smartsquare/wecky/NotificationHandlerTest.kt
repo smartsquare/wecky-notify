@@ -9,7 +9,7 @@ import com.amazonaws.services.dynamodbv2.model.*
 import com.amazonaws.services.simpleemail.AmazonSimpleEmailService
 import com.amazonaws.services.simpleemail.AmazonSimpleEmailServiceClientBuilder
 import com.amazonaws.services.simpleemail.model.VerifyEmailIdentityRequest
-import de.smartsquare.wecky.domain.UserRepository
+import de.smartsquare.wecky.domain.DynamoRepository
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -23,7 +23,7 @@ import java.util.*
 class NotificationHandlerTest {
 
     lateinit var handler: NotificationHandler
-    lateinit var repo: UserRepository
+    lateinit var repo: DynamoRepository
     lateinit var ses: AmazonSimpleEmailService
 
     @BeforeEach
@@ -36,7 +36,7 @@ class NotificationHandlerTest {
         val dyndbClient = AmazonDynamoDBClient.builder()
                 .withEndpointConfiguration(AwsClientBuilder.EndpointConfiguration(dyndbLocal, "eu-central-1"))
                 .build()
-        repo = UserRepository(dyndbClient)
+        repo = DynamoRepository(dyndbClient)
 
         createTable(dyndbClient, "User")
         createTable(dyndbClient, "Website")
@@ -48,6 +48,7 @@ class NotificationHandlerTest {
         dyndbClient.putItem("User", user)
         val website = mapOf(
                 "id" to AttributeValue("TIME"),
+                "url" to AttributeValue("https://time.is"),
                 "userId" to AttributeValue(userId))
         dyndbClient.putItem("Website", website)
 

@@ -6,23 +6,26 @@ import com.amazonaws.services.dynamodbv2.model.GetItemRequest
 import org.slf4j.LoggerFactory
 
 
-class UserRepository(val dynamoDB: AmazonDynamoDB) {
+class DynamoRepository(val dynamoDB: AmazonDynamoDB) {
 
     companion object Factory {
-        val log = LoggerFactory.getLogger(UserRepository::class.java.simpleName)
+        val log = LoggerFactory.getLogger(DynamoRepository::class.java.simpleName)
     }
 
-    fun findUserIdBy(hashedWebsite: HashedWebsite): String? {
-        val websiteId = hashedWebsite.websiteId
+    fun findWebsiteById(websiteId: String): Website? {
         log.info("Fetching website for id [$websiteId]")
         val getItemRequest = GetItemRequest()
                 .withKey(mapOf("id" to AttributeValue(websiteId)))
                 .withTableName("Website")
-        val website = dynamoDB.getItem(getItemRequest).item
-        if (website == null) {
+        val record = dynamoDB.getItem(getItemRequest).item
+        if (record == null) {
             log.info("No website found with id [$websiteId]")
+            return null
         }
-        return website["userId"]?.s
+        return Website(
+                record["id"]!!.s,
+                record["url"]!!.s,
+                record["userId"]!!.s)
     }
 
 

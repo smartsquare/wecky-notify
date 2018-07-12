@@ -5,18 +5,15 @@ import com.amazonaws.regions.Regions
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder
-import com.amazonaws.services.dynamodbv2.model.OperationType
 import com.amazonaws.services.lambda.runtime.Context
 import com.amazonaws.services.lambda.runtime.RequestStreamHandler
-import com.amazonaws.services.lambda.runtime.events.DynamodbEvent
+import com.amazonaws.services.s3.event.S3EventNotification
 import com.amazonaws.services.simpleemail.AmazonSimpleEmailService
 import com.amazonaws.services.simpleemail.AmazonSimpleEmailServiceClientBuilder
-import de.smartsquare.wecky.domain.HashedWebsite
-import de.smartsquare.wecky.domain.UserRepository
+import de.smartsquare.wecky.domain.DynamoRepository
 import org.slf4j.LoggerFactory
 import java.io.InputStream
 import java.io.OutputStream
-import java.time.Instant
 
 class NotificationHandler : RequestStreamHandler {
 
@@ -26,32 +23,34 @@ class NotificationHandler : RequestStreamHandler {
     }
 
     override fun handleRequest(inputStream: InputStream?, output: OutputStream?, context: Context?) {
-        val dyndbEvent = mapper.readValue(inputStream!!, DynamodbEvent::class.java)
+        val s3Event = mapper.readValue(inputStream!!, S3EventNotification::class.java)
 
-        for (record in dyndbEvent.records) {
-            if (record.eventName != OperationType.INSERT.toString()) {
+        for (record in s3Event.records) {
+            if (record.eventName != "ObjectCreated:Put") {
                 log.info("Record event not of type INSERT, aborting...")
                 return
             }
 
-            val item = record.dynamodb.newImage
-            val hashedWebsite = HashedWebsite(
-                    item.get("websiteId")!!.s,
-                    item.get("url")!!.s,
-                    item.get("content")!!.s,
-                    item.get("hashValue")!!.s.toInt(),
-                    Instant.ofEpochMilli(item.get("crawlDate")!!.n.toLong()))
-
             val ses = determineSes()
-            val userRepo = UserRepository(determineDynamoDB())
+            val dynamoRepo = DynamoRepository(determineDynamoDB())
 
-            userRepo.findUserIdBy(hashedWebsite)
-                    ?.let { userRepo.findUserBy(it) }
-                    ?.let { NotificationService(ses).notifyUser(it, hashedWebsite) }
+            val bucket = record.s3.bucket.name
+            val key = record.s3.getObject().key
+            val region = record.awsRegion
+            val linkToScreenshot = "https://s3.$region.amazonaws.com/$bucket/$key"
+
+            val websiteId = key.split("-")[0]
+            val website = dynamoRepo.findWebsiteById(websiteId)
+
+            website
+                    ?.let { dynamoRepo.findUserBy(it.userId) }
+                    ?.let { NotificationService(ses).notifyUser(it, website, linkToScreenshot) }
         }
     }
 
     private fun getEnv(name: String) = System.getenv(name) ?: System.getProperty(name)
+
+    private fun endpointConfiguration(local: String?) = AwsClientBuilder.EndpointConfiguration(local, "eu-west-1")
 
     private fun determineSes(): AmazonSimpleEmailService {
         val sesLocal = getEnv("SES_LOCAL")
@@ -59,7 +58,7 @@ class NotificationHandler : RequestStreamHandler {
         return if (sesLocal?.isNotEmpty() == true) {
             log.info("Triggered local dev mode using local SES at [$sesLocal]")
             AmazonSimpleEmailServiceClientBuilder.standard()
-                    .withEndpointConfiguration(AwsClientBuilder.EndpointConfiguration(sesLocal, "eu-west-1"))
+                    .withEndpointConfiguration(endpointConfiguration(sesLocal))
                     .build()
         } else {
             log.info("Using production SES at eu-west-1")
@@ -69,7 +68,6 @@ class NotificationHandler : RequestStreamHandler {
         }
     }
 
-
     private fun determineDynamoDB(): AmazonDynamoDB {
         val dyndbLocal = getEnv("DYNDB_LOCAL")
         return if (dyndbLocal?.isNotEmpty() == true) {
@@ -77,7 +75,7 @@ class NotificationHandler : RequestStreamHandler {
             System.setProperty("aws.accessKeyId", "key")
             System.setProperty("aws.secretKey", "key2")
             AmazonDynamoDBClient.builder()
-                    .withEndpointConfiguration(AwsClientBuilder.EndpointConfiguration(dyndbLocal, "eu-central-1"))
+                    .withEndpointConfiguration(endpointConfiguration(dyndbLocal))
                     .build()
         } else {
             log.info("Using production DynamoDB at eu-central-1")
