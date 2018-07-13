@@ -10,7 +10,6 @@ import com.amazonaws.services.lambda.runtime.RequestStreamHandler
 import com.amazonaws.services.s3.AmazonS3
 import com.amazonaws.services.s3.AmazonS3ClientBuilder
 import com.amazonaws.services.s3.event.S3EventNotification
-import com.amazonaws.services.s3.transfer.TransferManagerBuilder
 import com.amazonaws.services.simpleemail.AmazonSimpleEmailService
 import com.amazonaws.services.simpleemail.AmazonSimpleEmailServiceClientBuilder
 import de.smartsquare.wecky.domain.DynamoRepository
@@ -35,7 +34,6 @@ class NotificationHandler : RequestStreamHandler {
             }
 
             val ses = determineSes()
-            val transferManager = TransferManagerBuilder.standard().withS3Client(determineS3()).build()
             val dynamoRepo = DynamoRepository(determineDynamoDB())
 
             val bucket = record.s3.bucket.name
@@ -43,15 +41,13 @@ class NotificationHandler : RequestStreamHandler {
             val websiteId = key.split("-")[0]
             val website = dynamoRepo.findWebsiteById(websiteId)
 
-            val tempFile = createTempFile()
-            val download = transferManager.download(bucket, key, tempFile)
-            while (!download.isDone) {
-                Thread.sleep(100)
-            }
+            log.info("Downloading [$key] from S3 bucket [$bucket]")
+            val s3Object = determineS3().getObject(bucket, key)
+            val screenshot = s3Object.objectContent.readAllBytes()
 
             website
                     ?.let { dynamoRepo.findUserBy(it.userId) }
-                    ?.let { NotificationService(ses).notifyUser(it, website, tempFile) }
+                    ?.let { NotificationService(ses).notifyUser(it, website, screenshot) }
         }
     }
 
@@ -63,8 +59,10 @@ class NotificationHandler : RequestStreamHandler {
         val s3Local = getEnv("S3_LOCAL")
         return if (s3Local?.isNotEmpty() == true) {
             log.info("Triggered local dev mode using local S3 at [$s3Local]")
+            setTestCredentials()
             AmazonS3ClientBuilder.standard()
                     .withEndpointConfiguration(endpointConfiguration(s3Local))
+                    .withPathStyleAccessEnabled(true)
                     .build()
         } else {
             log.info("Using production S3 at eu-central-1")
@@ -93,8 +91,7 @@ class NotificationHandler : RequestStreamHandler {
         val dyndbLocal = getEnv("DYNDB_LOCAL")
         return if (dyndbLocal?.isNotEmpty() == true) {
             log.info("Triggered local dev mode using local DynamoDB at [$dyndbLocal]")
-            System.setProperty("aws.accessKeyId", "key")
-            System.setProperty("aws.secretKey", "key2")
+            setTestCredentials()
             AmazonDynamoDBClient.builder()
                     .withEndpointConfiguration(endpointConfiguration(dyndbLocal))
                     .build()
@@ -104,5 +101,10 @@ class NotificationHandler : RequestStreamHandler {
                     .withRegion(Regions.EU_CENTRAL_1)
                     .build()
         }
+    }
+
+    private fun setTestCredentials() {
+        System.setProperty("aws.accessKeyId", "key")
+        System.setProperty("aws.secretKey", "key2")
     }
 }
