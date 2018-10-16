@@ -114,3 +114,5 @@ $RECYCLE.BIN/
 *.lnk
 
 /src/main/resources/AwsCredentials.properties
+
+target/
