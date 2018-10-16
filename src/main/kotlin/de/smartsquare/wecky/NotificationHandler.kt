@@ -43,7 +43,7 @@ class NotificationHandler : RequestStreamHandler {
 
             log.info("Downloading [$key] from S3 bucket [$bucket]")
             val s3Object = determineS3().getObject(bucket, key)
-            val screenshot = s3Object.objectContent.readAllBytes()
+            val screenshot = s3Object.objectContent.readBytes()
 
             website
                     ?.let { dynamoRepo.findUserBy(it.userId) }
