@@ -9,6 +9,3 @@ Resources:
       Runtime: java8
       Timeout: 180
       MemorySize: 512
-      Role:
-        Fn::ImportValue:
-          !Join ['-', [!Ref 'ProjectId', !Ref 'AWS::Region', 'LambdaTrustRole']]
