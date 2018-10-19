@@ -13,7 +13,8 @@ Resources:
         UploadedScreenshot:
           Type: S3
           Properties:
-            Bucket: !Ref wecky-screens
+            Bucket: !Ref WeckyScreens
             Events: s3:ObjectCreated:*
-  wecky-screens:
+  WeckyScreens:
     Type: AWS::S3::Bucket
+    BucketName: 'wecky-screens'
