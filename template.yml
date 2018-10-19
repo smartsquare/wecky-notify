@@ -17,4 +17,5 @@ Resources:
             Events: s3:ObjectCreated:*
   WeckyScreens:
     Type: AWS::S3::Bucket
-    BucketName: 'wecky-screens'
+    Properties:
+      BucketName: 'wecky-screens'
