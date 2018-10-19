@@ -9,3 +9,9 @@ Resources:
       Runtime: java8
       Timeout: 180
       MemorySize: 512
+      Events:
+        UploadedScreenshot:
+          Type: S3
+          Properties:
+            Bucket: !Ref wecky-screens
+            Events: s3:ObjectCreated:*
