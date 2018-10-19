@@ -9,6 +9,7 @@ Resources:
       Runtime: java8
       Timeout: 180
       MemorySize: 512
+      Role: arn:aws:iam::960341205924:role/wecky-notify-lambda
       Events:
         UploadedScreenshot:
           Type: S3
