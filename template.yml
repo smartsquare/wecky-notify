@@ -9,7 +9,7 @@ Resources:
       CodeUri: target/wecky-notify-1.0.jar
       Environment:
         Variables:
-          DYNDB_LOCAL: 
+          DYNDB_LOCAL: ''
       Runtime: java8
       Timeout: 180
       MemorySize: 512
