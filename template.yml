@@ -6,6 +6,10 @@ Resources:
     Properties:
       FunctionName: Wecky-NotifyUser
       Handler: de.smartsquare.wecky.NotificationHandler
+      CodeUri: target/wecky-notify-1.0.jar
+      Environment:
+        Variables:
+          DYNDB_LOCAL: 
       Runtime: java8
       Timeout: 180
       MemorySize: 512
