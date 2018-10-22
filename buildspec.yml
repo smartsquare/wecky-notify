@@ -1,22 +1,15 @@
 version: 0.2
 
 phases:
-  install:
-    commands:
-      # Upgrade AWS CLI to the latest version
-      - pip install --upgrade awscli
-  pre_build:
-    commands:
-      - echo Test started on `date`
-      - mvn clean compile test -DargLine="-Dci-server=true"
   build:
     commands:
       - echo Build started on `date`
       - mvn clean package -DargLine="-Dci-server=true"
-      - mv target/wecky-notify-1.0.jar .
-      - unzip wecky-notify-1.0.jar
+  post_build:
+    commands:
+      - echo Build completed on `date`
       - aws cloudformation package --template template.yml --s3-bucket $S3_BUCKET --output-template template-export.yml
-      - rm -rf target tst src buildspec.yml pom.xml wecky-notify-1.0.jar      
 artifacts:
   files:
     - template-export.yml
+  discard-paths: yes
