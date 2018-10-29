@@ -10,6 +10,8 @@ Resources:
       Environment:
         Variables:
           DYNDB_LOCAL: ''
+          S3_LOCAL: ''
+          SES_LOCAL: ''
       Runtime: java8
       Timeout: 180
       MemorySize: 512
