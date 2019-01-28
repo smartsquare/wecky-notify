@@ -96,7 +96,7 @@ class NotificationHandlerTest {
 
     @Test
     fun no_previous_hashes() {
-        val inputStream = javaClass.classLoader.getResourceAsStream("event.json")
+        val inputStream = javaClass.classLoader.getResourceAsStream("bucket_put.json")
 
         handler.handleRequest(inputStream, ByteArrayOutputStream(), null)
 
